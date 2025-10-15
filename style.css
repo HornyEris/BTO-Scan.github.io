@@ -1,0 +1,98 @@
+/* === Paradise Scan Light Theme === */
+
+body {
+  margin: 0;
+  font-family: "Poppins", Arial, sans-serif;
+  background-color: #fafafa;
+  color: #222;
+}
+
+header {
+  text-align: center;
+  padding: 1.5em 0;
+  background-color: #ffffff;
+  border-bottom: 2px solid #eee;
+}
+
+h1 {
+  margin: 0;
+  color: #222;
+  font-size: 1.8em;
+}
+
+p {
+  color: #555;
+  margin: 0.5em 0 0;
+}
+
+.series-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.5em;
+  padding: 2em;
+}
+
+.series-card {
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  text-align: center;
+  padding: 1em;
+  transition: transform 0.2s ease;
+}
+
+.series-card:hover {
+  transform: translateY(-5px);
+}
+
+.series-card img {
+  width: 100%;
+  border-radius: 10px;
+}
+
+.series-card h2 {
+  font-size: 1.1em;
+  margin: 0.6em 0;
+}
+
+.series-card a {
+  display: inline-block;
+  padding: 0.5em 1em;
+  background-color: #0078ff;
+  color: #fff;
+  border-radius: 6px;
+  text-decoration: none;
+}
+
+.series-card a:hover {
+  background-color: #005fd1;
+}
+
+.reader img {
+  display: block;
+  margin: 0 auto;
+  width: 95%;
+  max-width: 1000px;
+  margin-bottom: 1em;
+}
+
+.nav-buttons {
+  text-align: center;
+  margin: 2em 0;
+}
+
+.nav-buttons a {
+  margin: 0 0.8em;
+  text-decoration: none;
+  color: #0078ff;
+  font-weight: bold;
+}
+
+footer {
+  text-align: center;
+  padding: 1em;
+  background: #fff;
+  border-top: 2px solid #eee;
+  color: #777;
+  font-size: 0.9em;
+}
