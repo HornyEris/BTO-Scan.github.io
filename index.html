@@ -3,27 +3,56 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BTO Scan</title>
+  <title>BTO Translation Team - Doujinshi</title>
   <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body>
-  <header>
-    <h1>BTO Scan</h1>
-    <p>Your daiy dose of Doujinshi </p>
+  
+  <header class="main-header">
+    <div class="logo">
+        <a href="index.html">BTO Translation Team</a>
+    </div>
+    <nav class="nav-links">
+        <a href="index.html"><i class="fas fa-home"></i> Home</a>
+        <a href="#"><i class="fas fa-info-circle"></i> About</a> 
+        <a href="#"><i class="fas fa-search"></i> Search</a>
+    </nav>
   </header>
 
-  <main class="series-grid">
+  <main class="series-grid container">
     <div class="series-card">
-      <img src="assets/Test.jpg" alt="Sample Series">
-      <h2>A Sticky Harem Full of Mother and Sister’s Milk</h2>
-      <a href="chapter.html">ဖတ်ရန်</a>
+      <div class="cover-container">
+        <img src="assets/sample-cover.jpg" alt="Sample Doujinshi Title"> 
+        <span class="card-tag hot-tag">New</span>
+      </div>
+      <div class="card-info">
+        <h2>Sample Doujinshi Title</h2>
+        <p class="latest-chapter">One-Shot Released: Oct 15, 2025</p>
+        <a href="chapter.html" class="read-btn">
+          Read Now <i class="fas fa-arrow-right"></i>
+        </a>
+      </div>
+    </div>
+    
+    <div class="series-card">
+        <div class="cover-container">
+            <img src="assets/sample-cover.jpg" alt="Another Great Doujinshi">
+            <span class="card-tag old-tag">Completed</span>
+        </div>
+        <div class="card-info">
+            <h2>Another Great Doujinshi</h2>
+            <p class="latest-chapter">One-Shot Released: Sept 20, 2025</p>
+            <a href="chapter.html" class="read-btn">
+              Read Now <i class="fas fa-arrow-right"></i>
+            </a>
+        </div>
     </div>
 
-    <!-- Duplicate the block above for each new series -->
   </main>
 
   <footer>
-    <p>© 2025 Beyond The Oblivion · Hosted on GitHub Pages</p>
+    <p>Copyright © 2025 BTO Translation Team. All Rights Reserved.</p>
   </footer>
 </body>
 </html>
