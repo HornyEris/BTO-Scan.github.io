@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Reader — BTO Translation Team</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="site-header small">
+    <div class="wrap">
+      <a class="back" href="index.html">← Back</a>
+      <h1 id="title">Reader</h1>
+    </div>
+  </header>
+
+  <main class="wrap reader-wrap">
+    <div id="meta" class="meta"></div>
+
+    <div id="reader" class="reader">
+      <!-- pages will be injected here -->
+    </div>
+
+    <nav class="nav-buttons">
+      <button id="prevBtn">← Prev</button>
+      <a id="downloadAll" class="btn-link" href="#" download>Download ZIP</a>
+      <button id="nextBtn">Next →</button>
+    </nav>
+  </main>
+
+  <footer class="site-footer wrap">
+    <div>© 2025 Beyond The Oblivion</div>
+  </footer>
+
+  <script src="site.js"></script>
+  <script>
+    // call reader init after site.js loaded
+    window.addEventListener('DOMContentLoaded', () => {
+      if (window.Reader) {
+        Reader.initFromQuery(); // loads ?slug=sample-doujinshi
+      }
+    });
+  </script>
+</body>
+</html>
