@@ -1,31 +1,46 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>BTO Translation Team — Doujinshi</title>
-  <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BTO Translation Team</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <header class="site-header">
-    <div class="wrap">
-      <h1><a href="./">BTO Translation Team</a></h1>
-      <div class="subtitle">Single-chapter doujinshi collection</div>
-      <div class="search-row">
-        <input id="search" placeholder="Search title, artist, tag..." />
-      </div>
-    </div>
+  <header>
+    <h1>BTO Translation Team</h1>
   </header>
 
-  <main class="wrap">
-    <section id="grid" class="grid"></section>
-    <div id="empty" class="empty" hidden>No results.</div>
-  </main>
+  <main id="gallery" class="gallery"></main>
 
-  <footer class="site-footer wrap">
-    <div>© 2025 Beyond The Oblivion</div>
+  <footer>
+    <p>© Beyond The Oblivion </p>
   </footer>
 
-  <script src="site.js"></script>
+  <script>
+    async function loadWorks() {
+      try {
+        const res = await fetch('works.json');
+        const works = await res.json();
+        const gallery = document.getElementById('gallery');
+
+        works.forEach(work => {
+          const card = document.createElement('div');
+          card.className = 'card';
+          card.innerHTML = `
+            <a href="reader.html?path=${encodeURIComponent(work.path)}">
+              <img src="${work.cover}" alt="${work.title}" />
+              <h2>${work.title}</h2>
+            </a>
+          `;
+          gallery.appendChild(card);
+        });
+      } catch (err) {
+        console.error('Error loading works.json:', err);
+      }
+    }
+
+    loadWorks();
+  </script>
 </body>
 </html>
