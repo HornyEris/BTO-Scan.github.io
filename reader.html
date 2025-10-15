@@ -1,45 +1,55 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Reader — BTO Translation Team</title>
-  <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reader | BTO Translation Team</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <header class="site-header small">
-    <div class="wrap">
-      <a class="back" href="index.html">← Back</a>
-      <h1 id="title">Reader</h1>
-    </div>
+  <header>
+    <h1 id="title">Loading...</h1>
+    <a href="index.html" class="back-btn">← Back</a>
   </header>
 
-  <main class="wrap reader-wrap">
-    <div id="meta" class="meta"></div>
+  <main id="reader" class="reader"></main>
 
-    <div id="reader" class="reader">
-      <!-- pages will be injected here -->
-    </div>
-
-    <nav class="nav-buttons">
-      <button id="prevBtn">← Prev</button>
-      <a id="downloadAll" class="btn-link" href="#" download>Download ZIP</a>
-      <button id="nextBtn">Next →</button>
-    </nav>
-  </main>
-
-  <footer class="site-footer wrap">
-    <div>© 2025 Beyond The Oblivion</div>
+  <footer>
+    <p>© Beyond The Oblivion</p>
   </footer>
 
-  <script src="site.js"></script>
   <script>
-    // call reader init after site.js loaded
-    window.addEventListener('DOMContentLoaded', () => {
-      if (window.Reader) {
-        Reader.initFromQuery(); // loads ?slug=sample-doujinshi
+    async function loadReader() {
+      const params = new URLSearchParams(window.location.search);
+      const path = params.get('path');
+      if (!path) {
+        document.getElementById('title').innerText = 'Invalid link';
+        return;
       }
-    });
+
+      try {
+        const res = await fetch('works.json');
+        const works = await res.json();
+        const work = works.find(w => w.path === path);
+
+        if (work) document.getElementById('title').innerText = work.title;
+
+        const reader = document.getElementById('reader');
+        for (let i = 1; i <= 200; i++) {
+          const num = String(i).padStart(3, '0');
+          const img = `${path}/${num}.jpg`;
+          const check = await fetch(img, { method: 'HEAD' });
+          if (!check.ok) break;
+          const el = document.createElement('img');
+          el.src = img;
+          reader.appendChild(el);
+        }
+      } catch (err) {
+        console.error('Error loading reader:', err);
+      }
+    }
+
+    loadReader();
   </script>
 </body>
 </html>
