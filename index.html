@@ -1,46 +1,92 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>BTO Translation Team</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>BTO Translation Team — Beyond The Oblivion</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <header>
-    <h1>BTO Translation Team</h1>
+  <header class="site-header">
+    <div class="wrap header-inner">
+      <a class="brand" href="index.html">
+        <img src="logo.png" alt="BTO Translation Team logo" class="logo">
+      </a>
+      <div class="tagline">BTO Translation Team</div>
+    </div>
   </header>
 
-  <main id="gallery" class="gallery"></main>
+  <main class="wrap">
+    <section class="controls">
+      <input id="search" placeholder="Search title, artist, tag, language..." />
+    </section>
 
-  <footer>
-    <p>© Beyond The Oblivion </p>
+    <section id="grid" class="grid" aria-live="polite"></section>
+
+    <div id="empty" class="empty" hidden>No results found.</div>
+  </main>
+
+  <footer class="site-footer">
+    <div>© Beyond The Oblivion 2025</div>
   </footer>
 
   <script>
-    async function loadWorks() {
-      try {
-        const res = await fetch('works.json');
-        const works = await res.json();
-        const gallery = document.getElementById('gallery');
-
-        works.forEach(work => {
-          const card = document.createElement('div');
-          card.className = 'card';
-          card.innerHTML = `
-            <a href="reader.html?path=${encodeURIComponent(work.path)}">
-              <img src="${work.cover}" alt="${work.title}" />
-              <h2>${work.title}</h2>
-            </a>
-          `;
-          gallery.appendChild(card);
-        });
-      } catch (err) {
-        console.error('Error loading works.json:', err);
-      }
+  // Homepage logic — loads works.json and renders gallery
+  (async function(){
+    const grid = document.getElementById('grid');
+    const search = document.getElementById('search');
+    let works = [];
+    try {
+      const res = await fetch('works.json');
+      works = await res.json();
+    } catch (err) {
+      grid.innerHTML = '<div class="empty">Unable to load works.json</div>';
+      console.error(err);
+      return;
     }
 
-    loadWorks();
+    function makeCard(w){
+      const a = document.createElement('a');
+      a.href = `reader.html?path=${encodeURIComponent(w.path)}&p=1`;
+      a.className = 'card';
+      a.innerHTML = `
+        <div class="thumb-wrap">
+          <img class="thumb" src="${w.cover}" alt="${w.title}">
+        </div>
+        <div class="card-meta">
+          <h3 class="card-title">${w.title}</h3>
+          <div class="card-sub">${w.artist ? w.artist + ' • ' : ''}${w.language || ''}</div>
+          <div class="tag-row">${(w.tags || []).slice(0,5).map(t=>'<span class="tag">'+t+'</span>').join(' ')}</div>
+        </div>
+      `;
+      return a;
+    }
+
+    function render(list){
+      grid.innerHTML = '';
+      if(!list.length){ document.getElementById('empty').hidden = false; return; }
+      document.getElementById('empty').hidden = true;
+      list.forEach(w=>{
+        grid.appendChild(makeCard(w));
+      });
+    }
+
+    function filter(q){
+      const ql = (q||'').toLowerCase().trim();
+      if(!ql) return works;
+      return works.filter(w => {
+        return (w.title||'').toLowerCase().includes(ql)
+          || (w.artist||'').toLowerCase().includes(ql)
+          || (w.language||'').toLowerCase().includes(ql)
+          || (w.tags || []).join(' ').toLowerCase().includes(ql);
+      });
+    }
+
+    render(works);
+    search.addEventListener('input', () => {
+      render(filter(search.value));
+    });
+  })();
   </script>
 </body>
 </html>
