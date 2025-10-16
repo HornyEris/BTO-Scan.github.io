@@ -1,55 +1,136 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Reader | BTO Translation Team</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Reader — BTO Translation Team</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <header>
-    <h1 id="title">Loading...</h1>
-    <a href="index.html" class="back-btn">← Back</a>
+  <header class="site-header small">
+    <div class="wrap header-inner">
+      <a class="brand" href="index.html"><img src="logo.png" alt="logo" class="logo small-logo"></a>
+      <div id="workTitle" class="reader-title">Loading…</div>
+    </div>
   </header>
 
-  <main id="reader" class="reader"></main>
+  <main class="wrap reader-wrap">
+    <div class="reader-meta" id="metaBox"></div>
 
-  <footer>
-    <p>© Beyond The Oblivion</p>
+    <div class="reader-window">
+      <button id="prevBtn" class="nav-btn">← Prev</button>
+      <div class="image-area">
+        <img id="pageImage" src="" alt="page" />
+        <div id="pageCounter" class="page-counter"></div>
+      </div>
+      <button id="nextBtn" class="nav-btn">Next →</button>
+    </div>
+
+    <div class="reader-controls">
+      <a id="downloadBtn" class="btn-link" href="#" download>Open image in new tab</a>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div>© Beyond The Oblivion 2025</div>
   </footer>
 
   <script>
-    async function loadReader() {
-      const params = new URLSearchParams(window.location.search);
-      const path = params.get('path');
-      if (!path) {
-        document.getElementById('title').innerText = 'Invalid link';
-        return;
-      }
+  // Reader logic: uses works.json (expects pages array optional)
+  (async function(){
+    function qs(name, def) {
+      const p = new URLSearchParams(location.search).get(name);
+      return p === null ? def : p;
+    }
+    const path = qs('path','');
+    let pageIndex = parseInt(qs('p', '1'), 10);
+    if(!path) {
+      document.getElementById('workTitle').innerText = 'Invalid link';
+      return;
+    }
 
-      try {
-        const res = await fetch('works.json');
-        const works = await res.json();
-        const work = works.find(w => w.path === path);
+    let works = [];
+    try {
+      const res = await fetch('works.json');
+      works = await res.json();
+    } catch(e){
+      console.error(e);
+      return;
+    }
+    const work = works.find(w => w.path === path);
+    if(!work){
+      document.getElementById('workTitle').innerText = 'Work not found';
+      return;
+    }
 
-        if (work) document.getElementById('title').innerText = work.title;
+    const pages = Array.isArray(work.pages) && work.pages.length ? work.pages : null;
+    // if pages not provided, reader will try sequential files 001.jpg .. until missing encountered
+    const maxFallback = 500; // safety cap
+    const imageEl = document.getElementById('pageImage');
+    const titleEl = document.getElementById('workTitle');
+    const metaBox = document.getElementById('metaBox');
+    const counter = document.getElementById('pageCounter');
 
-        const reader = document.getElementById('reader');
-        for (let i = 1; i <= 200; i++) {
-          const num = String(i).padStart(3, '0');
-          const img = `${path}/${num}.jpg`;
-          const check = await fetch(img, { method: 'HEAD' });
-          if (!check.ok) break;
-          const el = document.createElement('img');
-          el.src = img;
-          reader.appendChild(el);
+    titleEl.innerText = work.title;
+    metaBox.innerHTML = `<div class="meta-line"><strong>Artist:</strong> ${work.artist || 'Unknown'}</div>
+                         <div class="meta-line"><strong>Language:</strong> ${work.language || 'Unknown'}</div>
+                         <div class="meta-line"><strong>Tags:</strong> ${(work.tags||[]).join(', ')}</div>`;
+
+    // preload list
+    let imageList = [];
+    if(pages){
+      imageList = pages.map(p => `${path}/${p}`);
+    } else {
+      // attempt HEAD fetch sequentially and build list (best-effort)
+      for(let i=1;i<=maxFallback;i++){
+        const n = String(i).padStart(3,'0') + '.jpg';
+        const url = `${path}/${n}`;
+        try {
+          const r = await fetch(url, { method:'HEAD' });
+          if(!r.ok) break;
+          imageList.push(url);
+        } catch(e){
+          break;
         }
-      } catch (err) {
-        console.error('Error loading reader:', err);
       }
     }
 
-    loadReader();
+    if(!imageList.length){
+      metaBox.innerHTML += '<div class="meta-line error">No images found in the folder.</div>';
+      return;
+    }
+
+    const total = imageList.length;
+    function clamp(i){
+      if(i < 1) return 1;
+      if(i > total) return total;
+      return i;
+    }
+
+    function show(i){
+      i = clamp(i);
+      pageIndex = i;
+      imageEl.src = imageList[i-1];
+      counter.innerText = `${i} / ${total}`;
+      // update URL without reload
+      const u = new URL(location);
+      u.searchParams.set('p', String(i));
+      history.replaceState(null, '', u);
+      // update download link
+      document.getElementById('downloadBtn').href = imageList[i-1];
+    }
+
+    document.getElementById('prevBtn').addEventListener('click', ()=> show(pageIndex-1));
+    document.getElementById('nextBtn').addEventListener('click', ()=> show(pageIndex+1));
+    // keyboard navigation
+    window.addEventListener('keydown', (e)=>{
+      if(e.key === 'ArrowLeft') show(pageIndex-1);
+      if(e.key === 'ArrowRight') show(pageIndex+1);
+    });
+
+    // initial show
+    show(clamp(pageIndex));
+  })();
   </script>
 </body>
 </html>
