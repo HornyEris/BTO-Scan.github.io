@@ -1,41 +1,144 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>BTO Translation Team — Beyond The Oblivion</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Beyond The Oblivion — Doujinshi Archive</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body {
+      background: #e6e6e6;
+      margin: 0;
+      font-family: Arial, sans-serif;
+      color: #222;
+    }
+    header {
+      background: #fff;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+      padding: 12px 20px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    header h1 {
+      font-size: 18px;
+      margin: 0;
+    }
+    header img {
+      height: 28px;
+      vertical-align: middle;
+    }
+    header a {
+      color: #6c3cc9;
+      text-decoration: none;
+      font-weight: bold;
+    }
+    main {
+      max-width: 1200px;
+      margin: 20px auto;
+      padding: 0 10px;
+    }
+    .search-bar {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    #search {
+      width: 90%;
+      max-width: 400px;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 15px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 20px;
+    }
+    .card {
+      background: #fff;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      transition: transform 0.2s, box-shadow 0.2s;
+      text-decoration: none;
+      color: inherit;
+    }
+    .card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    .thumb-wrap {
+      width: 100%;
+      height: 260px;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: #ddd;
+    }
+    .thumb-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .card-meta {
+      padding: 10px;
+    }
+    .card-title {
+      font-size: 15px;
+      font-weight: bold;
+      margin: 0 0 6px;
+      color: #111;
+      line-height: 1.3;
+    }
+    .card-sub {
+      font-size: 13px;
+      color: #666;
+      margin-bottom: 6px;
+    }
+    .tag {
+      display: inline-block;
+      background: #f0f0f0;
+      border-radius: 4px;
+      padding: 2px 6px;
+      font-size: 12px;
+      margin: 2px;
+    }
+    footer {
+      text-align: center;
+      font-size: 13px;
+      color: #555;
+      margin: 30px 0;
+    }
+  </style>
 </head>
 <body>
-  <header class="site-header">
-    <div class="wrap header-inner">
-      <a class="brand" href="index.html">
-        <img src="logo.png" alt="BTO Translation Team logo" class="logo">
-      </a>
-      <div class="tagline">BTO Translation Team</div>
-    </div>
+  <header>
+    <h1><img src="logo.png" alt="BTO Logo"> Beyond The Oblivion</h1>
+    <a href="#">BTO Translation Team</a>
   </header>
 
-  <main class="wrap">
-    <section class="controls">
-      <input id="search" placeholder="Search title, artist, tag, language..." />
-    </section>
+  <main>
+    <div class="search-bar">
+      <input id="search" type="text" placeholder="Search title, artist, tag, language...">
+    </div>
 
-    <section id="grid" class="grid" aria-live="polite"></section>
-
-    <div id="empty" class="empty" hidden>No results found.</div>
+    <section id="grid" class="grid"></section>
+    <div id="empty" hidden>No results found.</div>
   </main>
 
-  <footer class="site-footer">
-    <div>© Beyond The Oblivion 2025</div>
-  </footer>
+  <footer>© Beyond The Oblivion 2025</footer>
 
   <script>
-  // Homepage logic — loads works.json and renders gallery
   (async function(){
     const grid = document.getElementById('grid');
     const search = document.getElementById('search');
     let works = [];
+
     try {
       const res = await fetch('works.json');
       works = await res.json();
@@ -47,16 +150,16 @@
 
     function makeCard(w){
       const a = document.createElement('a');
-      a.href = `reader?path=${encodeURIComponent(w.path)}&p=1`;
+      a.href = `reader.html?path=${encodeURIComponent(w.path)}`;
       a.className = 'card';
       a.innerHTML = `
         <div class="thumb-wrap">
-          <img class="thumb" src="${w.cover}" alt="${w.title}">
+          <img src="${w.cover}" alt="${w.title}">
         </div>
         <div class="card-meta">
           <h3 class="card-title">${w.title}</h3>
           <div class="card-sub">${w.artist ? w.artist + ' • ' : ''}${w.language || ''}</div>
-          <div class="tag-row">${(w.tags || []).slice(0,5).map(t=>'<span class="tag">'+t+'</span>').join(' ')}</div>
+          <div>${(w.tags || []).slice(0,3).map(t=>'<span class="tag">'+t+'</span>').join(' ')}</div>
         </div>
       `;
       return a;
@@ -83,9 +186,7 @@
     }
 
     render(works);
-    search.addEventListener('input', () => {
-      render(filter(search.value));
-    });
+    search.addEventListener('input', () => render(filter(search.value)));
   })();
   </script>
 </body>
