@@ -47,7 +47,7 @@
 
     function makeCard(w){
       const a = document.createElement('a');
-      a.href = `reader.html?path=${encodeURIComponent(w.path)}&p=1`;
+      a.href = `reader?path=${encodeURIComponent(w.path)}&p=1`;
       a.className = 'card';
       a.innerHTML = `
         <div class="thumb-wrap">
