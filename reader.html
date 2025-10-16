@@ -1,136 +1,95 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Reader — BTO Translation Team</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Reader — Beyond The Oblivion</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body {
+      background-color: #1e1e1e;
+      color: #ddd;
+      font-family: sans-serif;
+      margin: 0;
+    }
+    header {
+      background: #2c2c2c;
+      padding: 12px 20px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    header h1 {
+      font-size: 18px;
+      margin: 0;
+      color: #fff;
+    }
+    header a {
+      color: #b57aff;
+      text-decoration: none;
+      font-weight: bold;
+    }
+    main {
+      max-width: 800px;
+      margin: 20px auto;
+      background: #2a2a2a;
+      border-radius: 8px;
+      padding: 16px;
+    }
+    .page {
+      margin-bottom: 16px;
+      display: flex;
+      justify-content: center;
+    }
+    .page img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 4px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+    footer {
+      text-align: center;
+      padding: 16px;
+      color: #aaa;
+    }
+  </style>
 </head>
 <body>
-  <header class="site-header small">
-    <div class="wrap header-inner">
-      <a class="brand" href="index.html"><img src="logo.png" alt="logo" class="logo small-logo"></a>
-      <div id="workTitle" class="reader-title">Loading…</div>
-    </div>
+  <header>
+    <h1 id="title">Loading...</h1>
+    <a href="index.html">🏠 Home</a>
   </header>
-
-  <main class="wrap reader-wrap">
-    <div class="reader-meta" id="metaBox"></div>
-
-    <div class="reader-window">
-      <button id="prevBtn" class="nav-btn">← Prev</button>
-      <div class="image-area">
-        <img id="pageImage" src="" alt="page" />
-        <div id="pageCounter" class="page-counter"></div>
-      </div>
-      <button id="nextBtn" class="nav-btn">Next →</button>
-    </div>
-
-    <div class="reader-controls">
-      <a id="downloadBtn" class="btn-link" href="#" download>Open image in new tab</a>
-    </div>
-  </main>
-
-  <footer class="site-footer">
-    <div>© Beyond The Oblivion 2025</div>
-  </footer>
+  <main id="reader"></main>
+  <footer>© Beyond The Oblivion 2025</footer>
 
   <script>
-  // Reader logic: uses works.json (expects pages array optional)
-  (async function(){
-    function qs(name, def) {
-      const p = new URLSearchParams(location.search).get(name);
-      return p === null ? def : p;
-    }
-    const path = qs('path','');
-    let pageIndex = parseInt(qs('p', '1'), 10);
-    if(!path) {
-      document.getElementById('workTitle').innerText = 'Invalid link';
-      return;
-    }
-
-    let works = [];
-    try {
-      const res = await fetch('works.json');
-      works = await res.json();
-    } catch(e){
-      console.error(e);
-      return;
-    }
+  async function loadWork() {
+    const url = new URL(window.location.href);
+    const path = url.searchParams.get('path');
+    const res = await fetch('works.json');
+    const works = await res.json();
     const work = works.find(w => w.path === path);
-    if(!work){
-      document.getElementById('workTitle').innerText = 'Work not found';
+    const container = document.getElementById('reader');
+    const title = document.getElementById('title');
+    if (!work) {
+      container.innerHTML = "<p>Work not found.</p>";
       return;
     }
-
-    const pages = Array.isArray(work.pages) && work.pages.length ? work.pages : null;
-    // if pages not provided, reader will try sequential files 001.jpg .. until missing encountered
-    const maxFallback = 500; // safety cap
-    const imageEl = document.getElementById('pageImage');
-    const titleEl = document.getElementById('workTitle');
-    const metaBox = document.getElementById('metaBox');
-    const counter = document.getElementById('pageCounter');
-
-    titleEl.innerText = work.title;
-    metaBox.innerHTML = `<div class="meta-line"><strong>Artist:</strong> ${work.artist || 'Unknown'}</div>
-                         <div class="meta-line"><strong>Language:</strong> ${work.language || 'Unknown'}</div>
-                         <div class="meta-line"><strong>Tags:</strong> ${(work.tags||[]).join(', ')}</div>`;
-
-    // preload list
-    let imageList = [];
-    if(pages){
-      imageList = pages.map(p => `${path}/${p}`);
-    } else {
-      // attempt HEAD fetch sequentially and build list (best-effort)
-      for(let i=1;i<=maxFallback;i++){
-        const n = String(i).padStart(3,'0') + '.jpg';
-        const url = `${path}/${n}`;
-        try {
-          const r = await fetch(url, { method:'HEAD' });
-          if(!r.ok) break;
-          imageList.push(url);
-        } catch(e){
-          break;
-        }
-      }
-    }
-
-    if(!imageList.length){
-      metaBox.innerHTML += '<div class="meta-line error">No images found in the folder.</div>';
-      return;
-    }
-
-    const total = imageList.length;
-    function clamp(i){
-      if(i < 1) return 1;
-      if(i > total) return total;
-      return i;
-    }
-
-    function show(i){
-      i = clamp(i);
-      pageIndex = i;
-      imageEl.src = imageList[i-1];
-      counter.innerText = `${i} / ${total}`;
-      // update URL without reload
-      const u = new URL(location);
-      u.searchParams.set('p', String(i));
-      history.replaceState(null, '', u);
-      // update download link
-      document.getElementById('downloadBtn').href = imageList[i-1];
-    }
-
-    document.getElementById('prevBtn').addEventListener('click', ()=> show(pageIndex-1));
-    document.getElementById('nextBtn').addEventListener('click', ()=> show(pageIndex+1));
-    // keyboard navigation
-    window.addEventListener('keydown', (e)=>{
-      if(e.key === 'ArrowLeft') show(pageIndex-1);
-      if(e.key === 'ArrowRight') show(pageIndex+1);
+    title.textContent = work.title;
+    work.pages.forEach(page => {
+      const div = document.createElement('div');
+      div.className = 'page';
+      const img = document.createElement('img');
+      img.src = `${work.path}/${page}`;
+      img.alt = page;
+      div.appendChild(img);
+      container.appendChild(div);
     });
-
-    // initial show
-    show(clamp(pageIndex));
-  })();
+  }
+  loadWork();
   </script>
 </body>
 </html>
