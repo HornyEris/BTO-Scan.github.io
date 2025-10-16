@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="style.css">
   <style>
     body {
-      background: #e7e7e7;
+      background: #e6e6e6;
       margin: 0;
       font-family: Arial, sans-serif;
       color: #222;
@@ -33,27 +33,34 @@
       font-weight: bold;
     }
     main {
-      max-width: 850px;
+      display: flex;
+      flex-wrap: wrap;
+      max-width: 1200px;
       margin: 20px auto;
+      gap: 20px;
+    }
+    aside {
+      flex: 1 1 280px;
       background: #fff;
       border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-      padding: 20px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      padding: 16px;
+      height: fit-content;
     }
-    .meta {
-      border-bottom: 1px solid #ddd;
-      padding-bottom: 10px;
-      margin-bottom: 20px;
+    .meta-cover img {
+      width: 100%;
+      border-radius: 6px;
+      margin-bottom: 10px;
+      box-shadow: 0 1px 5px rgba(0,0,0,0.2);
     }
     .meta h2 {
-      margin: 0;
-      font-size: 22px;
-      color: #111;
+      font-size: 20px;
+      margin: 8px 0;
     }
     .meta .sub {
       font-size: 14px;
       color: #666;
-      margin-top: 6px;
+      margin-bottom: 8px;
     }
     .tags {
       margin-top: 8px;
@@ -65,6 +72,13 @@
       padding: 2px 8px;
       font-size: 13px;
       margin: 2px;
+    }
+    .reader {
+      flex: 3 1 700px;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      padding: 20px;
     }
     .page {
       text-align: center;
@@ -87,6 +101,12 @@
       color: #555;
       margin: 20px 0;
     }
+
+    /* Mobile friendly */
+    @media (max-width: 800px) {
+      main { flex-direction: column; }
+      aside, .reader { width: 92%; margin: auto; }
+    }
   </style>
 </head>
 <body>
@@ -94,10 +114,16 @@
     <h1>Beyond The Oblivion</h1>
     <a href="index.html">🏠 Home</a>
   </header>
-  <main id="reader">
-    <div class="meta" id="meta"></div>
-    <div id="pages"></div>
+
+  <main>
+    <aside id="sidebar">
+      <div class="meta-cover" id="cover"></div>
+      <div class="meta" id="meta"></div>
+    </aside>
+
+    <section class="reader" id="reader"></section>
   </main>
+
   <footer>© Beyond The Oblivion 2025</footer>
 
   <script>
@@ -109,17 +135,20 @@
     const work = works.find(w => w.path === path);
 
     const meta = document.getElementById('meta');
-    const pagesDiv = document.getElementById('pages');
+    const coverDiv = document.getElementById('cover');
+    const readerDiv = document.getElementById('reader');
 
     if (!work) {
       meta.innerHTML = "<p>Work not found.</p>";
       return;
     }
 
+    coverDiv.innerHTML = `<img src="${work.cover}" alt="Cover">`;
     meta.innerHTML = `
       <h2>${work.title}</h2>
       <div class="sub">
-        ${work.artist ? "Artist: " + work.artist + " • " : ""}${work.language || ""}
+        ${work.artist ? "Artist: " + work.artist + "<br>" : ""}
+        ${work.language ? "Language: " + work.language : ""}
       </div>
       <div class="tags">${(work.tags || []).map(t=>'<span class="tag">'+t+'</span>').join(' ')}</div>
     `;
@@ -131,7 +160,7 @@
         <img src="${work.path}/${page}" alt="Page ${i+1}">
         <div class="page-num">Page ${i+1} / ${work.pages.length}</div>
       `;
-      pagesDiv.appendChild(wrap);
+      readerDiv.appendChild(wrap);
     });
   }
   loadReader();
