@@ -7,89 +7,134 @@
   <link rel="stylesheet" href="style.css">
   <style>
     body {
-      background-color: #1e1e1e;
-      color: #ddd;
-      font-family: sans-serif;
+      background: #e7e7e7;
       margin: 0;
+      font-family: Arial, sans-serif;
+      color: #222;
     }
     header {
-      background: #2c2c2c;
+      background: #fff;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
       padding: 12px 20px;
       position: sticky;
       top: 0;
       z-index: 10;
       display: flex;
-      align-items: center;
       justify-content: space-between;
+      align-items: center;
     }
     header h1 {
       font-size: 18px;
       margin: 0;
-      color: #fff;
     }
     header a {
-      color: #b57aff;
+      color: #6c3cc9;
       text-decoration: none;
       font-weight: bold;
     }
     main {
-      max-width: 800px;
+      max-width: 850px;
       margin: 20px auto;
-      background: #2a2a2a;
+      background: #fff;
       border-radius: 8px;
-      padding: 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      padding: 20px;
+    }
+    .meta {
+      border-bottom: 1px solid #ddd;
+      padding-bottom: 10px;
+      margin-bottom: 20px;
+    }
+    .meta h2 {
+      margin: 0;
+      font-size: 22px;
+      color: #111;
+    }
+    .meta .sub {
+      font-size: 14px;
+      color: #666;
+      margin-top: 6px;
+    }
+    .tags {
+      margin-top: 8px;
+    }
+    .tag {
+      display: inline-block;
+      background: #f0f0f0;
+      border-radius: 4px;
+      padding: 2px 8px;
+      font-size: 13px;
+      margin: 2px;
     }
     .page {
-      margin-bottom: 16px;
-      display: flex;
-      justify-content: center;
+      text-align: center;
+      margin-bottom: 20px;
     }
     .page img {
       max-width: 100%;
       height: auto;
       border-radius: 4px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      box-shadow: 0 1px 6px rgba(0,0,0,0.2);
+    }
+    .page-num {
+      font-size: 13px;
+      color: #888;
+      margin: 6px 0;
     }
     footer {
       text-align: center;
-      padding: 16px;
-      color: #aaa;
+      font-size: 13px;
+      color: #555;
+      margin: 20px 0;
     }
   </style>
 </head>
 <body>
   <header>
-    <h1 id="title">Loading...</h1>
+    <h1>Beyond The Oblivion</h1>
     <a href="index.html">🏠 Home</a>
   </header>
-  <main id="reader"></main>
+  <main id="reader">
+    <div class="meta" id="meta"></div>
+    <div id="pages"></div>
+  </main>
   <footer>© Beyond The Oblivion 2025</footer>
 
   <script>
-  async function loadWork() {
+  async function loadReader() {
     const url = new URL(window.location.href);
     const path = url.searchParams.get('path');
     const res = await fetch('works.json');
     const works = await res.json();
     const work = works.find(w => w.path === path);
-    const container = document.getElementById('reader');
-    const title = document.getElementById('title');
+
+    const meta = document.getElementById('meta');
+    const pagesDiv = document.getElementById('pages');
+
     if (!work) {
-      container.innerHTML = "<p>Work not found.</p>";
+      meta.innerHTML = "<p>Work not found.</p>";
       return;
     }
-    title.textContent = work.title;
-    work.pages.forEach(page => {
-      const div = document.createElement('div');
-      div.className = 'page';
-      const img = document.createElement('img');
-      img.src = `${work.path}/${page}`;
-      img.alt = page;
-      div.appendChild(img);
-      container.appendChild(div);
+
+    meta.innerHTML = `
+      <h2>${work.title}</h2>
+      <div class="sub">
+        ${work.artist ? "Artist: " + work.artist + " • " : ""}${work.language || ""}
+      </div>
+      <div class="tags">${(work.tags || []).map(t=>'<span class="tag">'+t+'</span>').join(' ')}</div>
+    `;
+
+    work.pages.forEach((page, i) => {
+      const wrap = document.createElement('div');
+      wrap.className = 'page';
+      wrap.innerHTML = `
+        <img src="${work.path}/${page}" alt="Page ${i+1}">
+        <div class="page-num">Page ${i+1} / ${work.pages.length}</div>
+      `;
+      pagesDiv.appendChild(wrap);
     });
   }
-  loadWork();
+  loadReader();
   </script>
 </body>
 </html>
