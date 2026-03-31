@@ -3,90 +3,125 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>HentaiKabar</title>
+  <title>HentaiKabar - Doujinshi Collection</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <header class="site-header">
-    <div class="wrap header-inner">
+    <div class="container header-inner">
       <a class="brand" href="index.html">
-        <img src="logo.png" alt="BTO Translation Team logo" class="logo">
+        <img src="logo.png" alt="HentaiKabar Logo" class="logo">
       </a>
-      <div class="tagline">HentaiKabar</div>
+      <span class="tagline">HentaiKabar</span>
     </div>
   </header>
 
-  <main class="wrap">
-    <section class="controls">
-      <input id="search" placeholder="Search title, artist, tag, language..." />
-    </section>
+  <main class="container">
+    <div class="search-section">
+      <input type="text" id="search" placeholder="Search by title, artist, tags, or language..." autocomplete="off">
+    </div>
 
-    <section id="grid" class="grid" aria-live="polite"></section>
+    <div id="grid" class="works-grid" aria-live="polite"></div>
 
-    <div id="empty" class="empty" hidden>No results found.</div>
+    <div id="empty-state" class="empty-state" style="display: none;">
+      <p>No results found. Try a different search term.</p>
+    </div>
   </main>
 
   <footer class="site-footer">
-    <div>© HentaiKabar 2026</div>
+    <div class="container">
+      <p>© HentaiKabar</p>
+    </div>
   </footer>
 
   <script>
-  // Homepage logic — loads works.json and renders gallery
-  (async function(){
-    const grid = document.getElementById('grid');
-    const search = document.getElementById('search');
-    let works = [];
-    try {
-      const res = await fetch('works.json');
-      works = await res.json();
-    } catch (err) {
-      grid.innerHTML = '<div class="empty">Unable to load works.json</div>';
-      console.error(err);
-      return;
-    }
+    // Homepage logic — loads works.json and renders gallery
+    (async function(){
+      const grid = document.getElementById('grid');
+      const searchInput = document.getElementById('search');
+      const emptyState = document.getElementById('empty-state');
+      let works = [];
 
-    function makeCard(w){
-      const a = document.createElement('a');
-      a.href = reader.html?path=${encodeURIComponent(w.path)}&p=1;
-      a.className = 'card';
-      a.innerHTML = `
-        <div class="thumb-wrap">
-          <img class="thumb" src="${w.cover}" alt="${w.title}">
-        </div>
-        <div class="card-meta">
-          <h3 class="card-title">${w.title}</h3>
-          <div class="card-sub">${w.artist ? w.artist + ' • ' : ''}${w.language  ''}</div>
-          <div class="tag-row">${(w.tags  []).slice(0,5).map(t=>'<span class="tag">'+t+'</span>').join(' ')}</div>
-        </div>
-      `;
-      return a;
-    }
+      try {
+        const res = await fetch('works.json');
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+        works = await res.json();
+      } catch (err) {
+        grid.innerHTML = '<div class="error-message">Unable to load works.json. Please check the file exists.</div>';
+        console.error(err);
+        return;
+      }
 
-    function render(list){
-      grid.innerHTML = '';
-      if(!list.length){ document.getElementById('empty').hidden = false; return; }
-      document.getElementById('empty').hidden = true;
-      list.forEach(w=>{
-        grid.appendChild(makeCard(w));
+      function createCard(work) {
+        const card = document.createElement('a');
+        card.href = `reader.html?path=${encodeURIComponent(work.path)}&p=1`;
+        card.className = 'work-card';
+        
+        // Create card HTML structure
+        card.innerHTML = `
+          <div class="card-cover">
+            <img src="${work.cover}" alt="${work.title}" loading="lazy">
+          </div>
+          <div class="card-info">
+            <h3 class="card-title">${escapeHtml(work.title)}</h3>
+            <div class="card-artist">${work.artist ? escapeHtml(work.artist) : 'Unknown Artist'}</div>
+            <div class="card-tags">
+              ${(work.tags || []).slice(0, 3).map(tag => `<span class="tag">${escapeHtml(tag)}</span>`).join('')}
+              ${(work.tags || []).length > 3 ? `<span class="tag">+${work.tags.length - 3}</span>` : ''}
+            </div>
+            <div class="card-language">${work.language ? escapeHtml(work.language) : ''}</div>
+          </div>
+        `;
+        return card;
+      }
+
+      function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, function(m) {
+          if (m === '&') return '&amp;';
+          if (m === '<') return '&lt;';
+          if (m === '>') return '&gt;';
+          return m;
+        });
+      }
+
+      function renderWorks(worksToRender) {
+        grid.innerHTML = '';
+        if (!worksToRender || worksToRender.length === 0) {
+          emptyState.style.display = 'block';
+          grid.style.display = 'none';
+          return;
+        }
+        
+        emptyState.style.display = 'none';
+        grid.style.display = 'grid';
+        
+        worksToRender.forEach(work => {
+          grid.appendChild(createCard(work));
+        });
+      }
+
+      function filterWorks(searchTerm) {
+        if (!searchTerm) return works;
+        
+        const term = searchTerm.toLowerCase().trim();
+        return works.filter(work => {
+          return (work.title || '').toLowerCase().includes(term) ||
+                 (work.artist || '').toLowerCase().includes(term) ||
+                 (work.language || '').toLowerCase().includes(term) ||
+                 (work.tags || []).some(tag => tag.toLowerCase().includes(term));
+        });
+      }
+
+      // Initial render
+      renderWorks(works);
+      
+      // Search handler
+      searchInput.addEventListener('input', (e) => {
+        const filtered = filterWorks(e.target.value);
+        renderWorks(filtered);
       });
-    }
-
-    function filter(q){
-      const ql = (q||'').toLowerCase().trim();
-      if(!ql) return works;
-      return works.filter(w => {
-        return (w.title||'').toLowerCase().includes(ql)
-           (w.artist'').toLowerCase().includes(ql)
-           (w.language'').toLowerCase().includes(ql)
-           (w.tags  []).join(' ').toLowerCase().includes(ql);
-      });
-    }
-
-    render(works);
-    search.addEventListener('input', () => {
-      render(filter(search.value));
-    });
-  })();
+    })();
   </script>
 </body>
 </html>
