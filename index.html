@@ -47,7 +47,7 @@
 
     function makeCard(w){
       const a = document.createElement('a');
-      a.href = `reader.html?path=${encodeURIComponent(w.path)}&p=1`;
+      a.href = reader.html?path=${encodeURIComponent(w.path)}&p=1;
       a.className = 'card';
       a.innerHTML = `
         <div class="thumb-wrap">
@@ -55,8 +55,8 @@
         </div>
         <div class="card-meta">
           <h3 class="card-title">${w.title}</h3>
-          <div class="card-sub">${w.artist ? w.artist + ' • ' : ''}${w.language || ''}</div>
-          <div class="tag-row">${(w.tags || []).slice(0,5).map(t=>'<span class="tag">'+t+'</span>').join(' ')}</div>
+          <div class="card-sub">${w.artist ? w.artist + ' • ' : ''}${w.language  ''}</div>
+          <div class="tag-row">${(w.tags  []).slice(0,5).map(t=>'<span class="tag">'+t+'</span>').join(' ')}</div>
         </div>
       `;
       return a;
@@ -76,9 +76,9 @@
       if(!ql) return works;
       return works.filter(w => {
         return (w.title||'').toLowerCase().includes(ql)
-          || (w.artist||'').toLowerCase().includes(ql)
-          || (w.language||'').toLowerCase().includes(ql)
-          || (w.tags || []).join(' ').toLowerCase().includes(ql);
+           (w.artist'').toLowerCase().includes(ql)
+           (w.language'').toLowerCase().includes(ql)
+           (w.tags  []).join(' ').toLowerCase().includes(ql);
       });
     }
 
