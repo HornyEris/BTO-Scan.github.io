@@ -3,167 +3,159 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Reader — HentaiKabar</title>
+  <title>Reader - HentaiKabar</title>
   <link rel="stylesheet" href="style.css">
-  <style>
-    body {
-      background: #e6e6e6;
-      margin: 0;
-      font-family: Arial, sans-serif;
-      color: #222;
-    }
-    header {
-      background: #fff;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
-      padding: 12px 20px;
-      position: sticky;
-      top: 0;
-      z-index: 10;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    header h1 {
-      font-size: 18px;
-      margin: 0;
-    }
-    header a {
-      color: #6c3cc9;
-      text-decoration: none;
-      font-weight: bold;
-    }
-    main {
-      display: flex;
-      flex-wrap: wrap;
-      max-width: 1200px;
-      margin: 20px auto;
-      gap: 20px;
-    }
-    aside {
-      flex: 1 1 280px;
-      background: #fff;
-      border-radius: 8px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-      padding: 16px;
-      height: fit-content;
-    }
-    .meta-cover img {
-      width: 100%;
-      border-radius: 6px;
-      margin-bottom: 10px;
-      box-shadow: 0 1px 5px rgba(0,0,0,0.2);
-    }
-    .meta h2 {
-      font-size: 20px;
-      margin: 8px 0;
-    }
-    .meta .sub {
-      font-size: 14px;
-      color: #666;
-      margin-bottom: 8px;
-    }
-    .tags {
-      margin-top: 8px;
-    }
-    .tag {
-      display: inline-block;
-      background: #f0f0f0;
-      border-radius: 4px;
-      padding: 2px 8px;
-      font-size: 13px;
-      margin: 2px;
-    }
-    .reader {
-      flex: 3 1 700px;
-      background: #fff;
-      border-radius: 8px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-      padding: 20px;
-    }
-    .page {
-      text-align: center;
-      margin-bottom: 20px;
-    }
-    .page img {
-      max-width: 100%;
-      height: auto;
-      border-radius: 4px;
-      box-shadow: 0 1px 6px rgba(0,0,0,0.2);
-    }
-    .page-num {
-      font-size: 13px;
-      color: #888;
-      margin: 6px 0;
-    }
-    footer {
-      text-align: center;
-      font-size: 13px;
-      color: #555;
-      margin: 20px 0;
-    }
-
-    /* Mobile friendly */
-    @media (max-width: 800px) {
-      main { flex-direction: column; }
-      aside, .reader { width: 92%; margin: auto; }
-    }
-  </style>
 </head>
 <body>
-  <header>
-    <h1>HentaiKabar</h1>
-    <a href="index.html">🏠 Home</a>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="index.html">
+        <img src="logo.png" alt="HentaiKabar Logo" class="logo">
+      </a>
+      <a href="index.html" class="home-link">← Back to Gallery</a>
+    </div>
   </header>
 
-  <main>
-    <aside id="sidebar">
-      <div class="meta-cover" id="cover"></div>
-      <div class="meta" id="meta"></div>
+  <main class="reader-container">
+    <aside class="reader-sidebar" id="sidebar">
+      <div class="sidebar-cover" id="cover"></div>
+      <div class="sidebar-meta" id="meta"></div>
     </aside>
 
-    <section class="reader" id="reader"></section>
+    <section class="reader-main">
+      <div class="reader-controls">
+        <button id="prev-page" class="nav-btn" disabled>← Previous</button>
+        <span id="page-indicator" class="page-counter">Page 1 / 1</span>
+        <button id="next-page" class="nav-btn" disabled>Next →</button>
+      </div>
+      <div class="reader-view" id="reader-view">
+        <div class="page-image-container">
+          <img id="current-page-img" alt="Page" style="max-width:100%; height:auto;">
+        </div>
+      </div>
+    </section>
   </main>
 
-  <footer>© HentaiKabar 2026</footer>
+  <footer class="site-footer">
+    <div class="container">
+      <p>© HentaiKabar</p>
+    </div>
+  </footer>
 
   <script>
-  async function loadReader() {
-    const url = new URL(window.location.href);
-    const path = url.searchParams.get('path');
-    const res = await fetch('works.json');
-    const works = await res.json();
-    const work = works.find(w => w.path === path);
+    let currentWork = null;
+    let currentPageIndex = 0;
+    let currentPages = [];
 
-    const meta = document.getElementById('meta');
-    const coverDiv = document.getElementById('cover');
-    const readerDiv = document.getElementById('reader');
-
-    if (!work) {
-      meta.innerHTML = "<p>Work not found.</p>";
-      return;
+    async function loadReader() {
+      const url = new URL(window.location.href);
+      const path = url.searchParams.get('path');
+      const pageParam = parseInt(url.searchParams.get('p')) || 1;
+      
+      try {
+        const res = await fetch('works.json');
+        if (!res.ok) throw new Error('Failed to load works.json');
+        const works = await res.json();
+        currentWork = works.find(w => w.path === path);
+        
+        if (!currentWork) {
+          document.getElementById('meta').innerHTML = '<p>Work not found.</p>';
+          return;
+        }
+        
+        currentPages = currentWork.pages || [];
+        currentPageIndex = Math.min(Math.max(1, pageParam), currentPages.length) - 1;
+        
+        renderSidebar();
+        updateReader();
+        setupNavigation();
+        updateUrlPageParam();
+      } catch (err) {
+        console.error(err);
+        document.getElementById('meta').innerHTML = '<p>Error loading work.</p>';
+      }
     }
-
-    coverDiv.innerHTML = `<img src="${work.cover}" alt="Cover">`;
-    meta.innerHTML = `
-      <h2>${work.title}</h2>
-      <div class="sub">
-        ${work.artist ? "Artist: " + work.artist + "<br>" : ""}
-        ${work.language ? "Language: " + work.language : ""}
-      </div>
-      <div class="tags">${(work.tags || []).map(t=>'<span class="tag">'+t+'</span>').join(' ')}</div>
-    `;
-
-    work.pages.forEach((page, i) => {
-      const wrap = document.createElement('div');
-      wrap.className = 'page';
-      wrap.innerHTML = `
-        <img src="${work.path}/${page}" alt="Page ${i+1}">
-        <div class="page-num">Page ${i+1} / ${work.pages.length}</div>
+    
+    function renderSidebar() {
+      const coverDiv = document.getElementById('cover');
+      const metaDiv = document.getElementById('meta');
+      
+      coverDiv.innerHTML = `<img src="${currentWork.cover}" alt="${currentWork.title} cover">`;
+      
+      let tagsHtml = '';
+      if (currentWork.tags && currentWork.tags.length) {
+        tagsHtml = `<div class="sidebar-tags">
+          ${currentWork.tags.map(t => `<span class="tag">${escapeHtml(t)}</span>`).join('')}
+        </div>`;
+      }
+      
+      metaDiv.innerHTML = `
+        <h2>${escapeHtml(currentWork.title)}</h2>
+        <div class="sidebar-artist">${currentWork.artist ? escapeHtml(currentWork.artist) : 'Unknown Artist'}</div>
+        <div class="sidebar-language">${currentWork.language ? escapeHtml(currentWork.language) : ''}</div>
+        ${tagsHtml}
+        <div class="sidebar-pages">${currentPages.length} pages</div>
       `;
-      readerDiv.appendChild(wrap);
-    });
-  }
-  loadReader();
+    }
+    
+    function updateReader() {
+      const img = document.getElementById('current-page-img');
+      if (currentPages.length && currentPages[currentPageIndex]) {
+        img.src = `${currentWork.path}/${currentPages[currentPageIndex]}`;
+        img.alt = `Page ${currentPageIndex + 1}`;
+      }
+      
+      document.getElementById('page-indicator').textContent = `Page ${currentPageIndex + 1} / ${currentPages.length}`;
+      
+      const prevBtn = document.getElementById('prev-page');
+      const nextBtn = document.getElementById('next-page');
+      prevBtn.disabled = currentPageIndex === 0;
+      nextBtn.disabled = currentPageIndex === currentPages.length - 1;
+    }
+    
+    function setupNavigation() {
+      document.getElementById('prev-page').addEventListener('click', () => {
+        if (currentPageIndex > 0) {
+          currentPageIndex--;
+          updateReader();
+          updateUrlPageParam();
+        }
+      });
+      
+      document.getElementById('next-page').addEventListener('click', () => {
+        if (currentPageIndex < currentPages.length - 1) {
+          currentPageIndex++;
+          updateReader();
+          updateUrlPageParam();
+        }
+      });
+      
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowLeft') {
+          document.getElementById('prev-page').click();
+        } else if (e.key === 'ArrowRight') {
+          document.getElementById('next-page').click();
+        }
+      });
+    }
+    
+    function updateUrlPageParam() {
+      const url = new URL(window.location.href);
+      url.searchParams.set('p', currentPageIndex + 1);
+      window.history.replaceState({}, '', url);
+    }
+    
+    function escapeHtml(str) {
+      if (!str) return '';
+      return str.replace(/[&<>]/g, function(m) {
+        if (m === '&') return '&amp;';
+        if (m === '<') return '&lt;';
+        if (m === '>') return '&gt;';
+        return m;
+      });
+    }
+    
+    loadReader();
   </script>
 </body>
 </html>
