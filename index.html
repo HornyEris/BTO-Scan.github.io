@@ -35,7 +35,6 @@
   </footer>
 
   <script>
-    // Homepage logic — loads works.json and renders gallery
     (function() {
       const grid = document.getElementById('grid');
       const searchInput = document.getElementById('search');
@@ -59,7 +58,6 @@
         card.href = 'reader.html?path=' + encodeURIComponent(work.path) + '&p=1';
         card.className = 'work-card';
         
-        // Escape function to prevent XSS
         function escape(str) {
           if (!str) return '';
           return str.replace(/[&<>]/g, function(m) {
@@ -72,8 +70,8 @@
         
         let tagsHtml = '';
         if (work.tags && work.tags.length) {
-          var tagsToShow = work.tags.slice(0, 3);
-          for (var i = 0; i < tagsToShow.length; i++) {
+          const tagsToShow = work.tags.slice(0, 3);
+          for (let i = 0; i < tagsToShow.length; i++) {
             tagsHtml += '<span class="tag">' + escape(tagsToShow[i]) + '</span>';
           }
           if (work.tags.length > 3) {
@@ -97,16 +95,19 @@
 
       function renderWorks(worksToRender) {
         grid.innerHTML = '';
+        
+        // Show empty state if no works
         if (!worksToRender || worksToRender.length === 0) {
           emptyState.style.display = 'block';
           grid.style.display = 'none';
           return;
         }
         
+        // Hide empty state and show grid
         emptyState.style.display = 'none';
         grid.style.display = 'grid';
         
-        for (var i = 0; i < worksToRender.length; i++) {
+        for (let i = 0; i < worksToRender.length; i++) {
           grid.appendChild(createCard(worksToRender[i]));
         }
       }
@@ -114,20 +115,20 @@
       function filterWorks(searchTerm) {
         if (!searchTerm) return works;
         
-        var term = searchTerm.toLowerCase().trim();
-        var filtered = [];
+        const term = searchTerm.toLowerCase().trim();
+        const filtered = [];
         
-        for (var i = 0; i < works.length; i++) {
-          var work = works[i];
-          var matches = false;
+        for (let i = 0; i < works.length; i++) {
+          const work = works[i];
+          let matches = false;
           
-          if ((work.title || '').toLowerCase().indexOf(term) !== -1) matches = true;
-          if (!matches && (work.artist || '').toLowerCase().indexOf(term) !== -1) matches = true;
-          if (!matches && (work.language || '').toLowerCase().indexOf(term) !== -1) matches = true;
+          if ((work.title || '').toLowerCase().includes(term)) matches = true;
+          if (!matches && (work.artist || '').toLowerCase().includes(term)) matches = true;
+          if (!matches && (work.language || '').toLowerCase().includes(term)) matches = true;
           
           if (!matches && work.tags) {
-            for (var j = 0; j < work.tags.length; j++) {
-              if (work.tags[j].toLowerCase().indexOf(term) !== -1) {
+            for (let j = 0; j < work.tags.length; j++) {
+              if (work.tags[j].toLowerCase().includes(term)) {
                 matches = true;
                 break;
               }
@@ -140,12 +141,10 @@
         return filtered;
       }
 
-      // Initialize
       loadWorks();
       
-      // Search handler
       searchInput.addEventListener('input', function(e) {
-        var filtered = filterWorks(e.target.value);
+        const filtered = filterWorks(e.target.value);
         renderWorks(filtered);
       });
     })();
