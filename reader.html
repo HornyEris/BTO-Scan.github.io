@@ -7,155 +7,93 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <div class="progress-container"><div class="progress-bar" id="myBar"></div></div>
+
   <header class="site-header">
     <div class="container header-inner">
       <a class="brand" href="index.html">
-        <img src="logo.png" alt="HentaiKabar Logo" class="logo">
+        <img src="logo.png" alt="Logo" class="logo">
       </a>
-      <a href="index.html" class="home-link">← Back to Gallery</a>
+      <a href="index.html" class="home-link">← Back</a>
     </div>
   </header>
 
-  <main class="reader-container">
+  <main class="reader-container container">
     <aside class="reader-sidebar" id="sidebar">
-      <div class="sidebar-cover" id="cover"></div>
-      <div class="sidebar-meta" id="meta"></div>
+      <div id="cover" class="sidebar-cover"></div>
+      <div id="meta" class="sidebar-meta"></div>
     </aside>
 
     <section class="reader-main">
       <div class="reader-controls">
-        <button id="prev-page" class="nav-btn" disabled>← Previous</button>
-        <span id="page-indicator" class="page-counter">Page 1 / 1</span>
-        <button id="next-page" class="nav-btn" disabled>Next →</button>
+        <button id="prev-page" class="nav-btn">Prev</button>
+        <span id="page-indicator" class="page-counter">0 / 0</span>
+        <button id="next-page" class="nav-btn">Next</button>
       </div>
-      <div class="reader-view" id="reader-view">
+      
+      <div class="reader-view">
         <div class="page-image-container">
-          <img id="current-page-img" alt="Page" style="max-width:100%; height:auto;">
+          <img id="current-page-img" alt="Loading...">
         </div>
       </div>
     </section>
   </main>
 
-  <footer class="site-footer">
-    <div class="container">
-      <p>© HentaiKabar</p>
-    </div>
-  </footer>
-
   <script>
-    let currentWork = null;
-    let currentPageIndex = 0;
-    let currentPages = [];
+    let currentWork = null, currentPageIndex = 0, currentPages = [];
 
-    async function loadReader() {
-      const url = new URL(window.location.href);
-      const path = url.searchParams.get('path');
-      const pageParam = parseInt(url.searchParams.get('p')) || 1;
+    async function init() {
+      const params = new URLSearchParams(window.location.search);
+      const path = params.get('path');
+      const p = parseInt(params.get('p')) || 1;
+
+      const res = await fetch('works.json');
+      const works = await res.json();
+      currentWork = works.find(w => w.path === path);
       
-      try {
-        const res = await fetch('works.json');
-        if (!res.ok) throw new Error('Failed to load works.json');
-        const works = await res.json();
-        currentWork = works.find(w => w.path === path);
-        
-        if (!currentWork) {
-          document.getElementById('meta').innerHTML = '<p>Work not found.</p>';
-          return;
-        }
-        
+      if (currentWork) {
         currentPages = currentWork.pages || [];
-        currentPageIndex = Math.min(Math.max(1, pageParam), currentPages.length) - 1;
-        
-        renderSidebar();
-        updateReader();
-        setupNavigation();
-        updateUrlPageParam();
-      } catch (err) {
-        console.error(err);
-        document.getElementById('meta').innerHTML = '<p>Error loading work.</p>';
+        currentPageIndex = p - 1;
+        renderUI();
+        updatePage();
       }
     }
-    
-    function renderSidebar() {
-      const coverDiv = document.getElementById('cover');
-      const metaDiv = document.getElementById('meta');
-      
-      coverDiv.innerHTML = `<img src="${currentWork.cover}" alt="${currentWork.title} cover">`;
-      
-      let tagsHtml = '';
-      if (currentWork.tags && currentWork.tags.length) {
-        tagsHtml = `<div class="sidebar-tags">
-          ${currentWork.tags.map(t => `<span class="tag">${escapeHtml(t)}</span>`).join('')}
-        </div>`;
-      }
-      
-      metaDiv.innerHTML = `
-        <h2>${escapeHtml(currentWork.title)}</h2>
-        <div class="sidebar-artist">${currentWork.artist ? escapeHtml(currentWork.artist) : 'Unknown Artist'}</div>
-        <div class="sidebar-language">${currentWork.language ? escapeHtml(currentWork.language) : ''}</div>
-        ${tagsHtml}
-        <div class="sidebar-pages">${currentPages.length} pages</div>
-      `;
+
+    function renderUI() {
+      document.getElementById('cover').innerHTML = <img src="${currentWork.cover}">;
+      document.getElementById('meta').innerHTML = 
+        <h2>${currentWork.title}</h2>
+        <p class="artist">${currentWork.artist}</p>
+        <div class="tags">${currentWork.tags.map(t => <span class="tag">${t}</span>).join('')}</div>
+      ;
     }
-    
-    function updateReader() {
+
+    function updatePage() {
       const img = document.getElementById('current-page-img');
-      if (currentPages.length && currentPages[currentPageIndex]) {
-        img.src = `${currentWork.path}/${currentPages[currentPageIndex]}`;
-        img.alt = `Page ${currentPageIndex + 1}`;
-      }
+      img.style.opacity = '0';
+      setTimeout(() => {
+        img.src = ${currentWork.path}/${currentPages[currentPageIndex]};
+        img.onload = () => img.style.opacity = '1';
+      }, 200);
+
+      document.getElementById('page-indicator').innerText = ${currentPageIndex + 1} / ${currentPages.length};
+      document.getElementById('prev-page').disabled = currentPageIndex === 0;
+      document.getElementById('next-page').disabled = currentPageIndex === currentPages.length - 1;
       
-      document.getElementById('page-indicator').textContent = `Page ${currentPageIndex + 1} / ${currentPages.length}`;
+      // Progress Bar
+      const scrolled = ((currentPageIndex + 1) / currentPages.length) * 100;
+      document.getElementById("myBar").style.width = scrolled + "%";
       
-      const prevBtn = document.getElementById('prev-page');
-      const nextBtn = document.getElementById('next-page');
-      prevBtn.disabled = currentPageIndex === 0;
-      nextBtn.disabled = currentPageIndex === currentPages.length - 1;
-    }
-    
-    function setupNavigation() {
-      document.getElementById('prev-page').addEventListener('click', () => {
-        if (currentPageIndex > 0) {
-          currentPageIndex--;
-          updateReader();
-          updateUrlPageParam();
-        }
-      });
-      
-      document.getElementById('next-page').addEventListener('click', () => {
-        if (currentPageIndex < currentPages.length - 1) {
-          currentPageIndex++;
-          updateReader();
-          updateUrlPageParam();
-        }
-      });
-      
-      document.addEventListener('keydown', (e) => {
-        if (e.key === 'ArrowLeft') {
-          document.getElementById('prev-page').click();
-        } else if (e.key === 'ArrowRight') {
-          document.getElementById('next-page').click();
-        }
-      });
-    }
-    
-    function updateUrlPageParam() {
-      const url = new URL(window.location.href);
+      const url = new URL(window.location);
       url.searchParams.set('p', currentPageIndex + 1);
       window.history.replaceState({}, '', url);
     }
-    
-    function escapeHtml(str) {
-      if (!str) return '';
-      return str.replace(/[&<>]/g, function(m) {
-        if (m === '&') return '&amp;';
-        if (m === '<') return '&lt;';
-        if (m === '>') return '&gt;';
-        return m;
-      });
-    }
-    
-    loadReader();
+
+    document.getElementById('prev-page').onclick = () => { if(currentPageIndex > 0) { currentPageIndex--; updatePage(); window.scrollTo(0,0); } };
+    document.getElementById('next-page').onclick = () => { if(currentPageIndex < currentPages.length-1) { currentPageIndex++; updatePage(); window.scrollTo(0,0); } };
+    document.onkeydown = (e) => { if(e.key === 'ArrowLeft') document.getElementById('prev-page').click(); if(e.key === 'ArrowRight') document.getElementById('next-page').click(); };
+
+    init();
   </script>
 </body>
 </html>
