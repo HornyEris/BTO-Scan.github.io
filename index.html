@@ -10,15 +10,18 @@
   <header class="site-header">
     <div class="container header-inner">
       <a class="brand" href="index.html">
-        <img src="logo.png" alt="HentaiKabar Logo" class="logo">
+        <img src="logo.png" alt="Logo" class="logo">
+        <span class="tagline">HentaiKabar</span>
       </a>
-      <span class="tagline">HentaiKabar</span>
     </div>
   </header>
 
   <main class="container">
     <div class="search-section">
-      <input type="text" id="search" placeholder="Search by title, artist, tags, or language..." autocomplete="off">
+      <div class="search-wrapper">
+        <input type="text" id="search" placeholder="Search title, artist, or tags..." autocomplete="off">
+        <div class="search-glow"></div>
+      </div>
     </div>
 
     <div id="grid" class="works-grid" aria-live="polite"></div>
@@ -30,7 +33,7 @@
 
   <footer class="site-footer">
     <div class="container">
-      <p>© HentaiKabar</p>
+      <p>© 2026 HentaiKabar • Made with Love</p>
     </div>
   </footer>
 
@@ -44,12 +47,10 @@
       async function loadWorks() {
         try {
           const res = await fetch('works.json');
-          if (!res.ok) throw new Error('HTTP error: ' + res.status);
           works = await res.json();
           renderWorks(works);
         } catch (err) {
-          grid.innerHTML = '<div class="error-message">Unable to load works.json. Please check the file exists.</div>';
-          console.error(err);
+          grid.innerHTML = '<div class="error-message">Unable to load database.</div>';
         }
       }
 
@@ -58,95 +59,46 @@
         card.href = 'reader.html?path=' + encodeURIComponent(work.path) + '&p=1';
         card.className = 'work-card';
         
-        function escape(str) {
-          if (!str) return '';
-          return str.replace(/[&<>]/g, function(m) {
-            if (m === '&') return '&amp;';
-            if (m === '<') return '&lt;';
-            if (m === '>') return '&gt;';
-            return m;
-          });
-        }
+        const tagsHtml = (work.tags || []).slice(0, 2).map(t => <span class="tag">${t}</span>).join('');
         
-        let tagsHtml = '';
-        if (work.tags && work.tags.length) {
-          const tagsToShow = work.tags.slice(0, 3);
-          for (let i = 0; i < tagsToShow.length; i++) {
-            tagsHtml += '<span class="tag">' + escape(tagsToShow[i]) + '</span>';
-          }
-          if (work.tags.length > 3) {
-            tagsHtml += '<span class="tag">+' + (work.tags.length - 3) + '</span>';
-          }
-        }
-        
-        card.innerHTML = `
+        card.innerHTML = 
           <div class="card-cover">
-            <img src="${escape(work.cover)}" alt="${escape(work.title)}" loading="lazy">
+            <img src="${work.cover}" alt="${work.title}" loading="lazy">
+            <div class="card-overlay"></div>
           </div>
           <div class="card-info">
-            <h3 class="card-title">${escape(work.title)}</h3>
-            <div class="card-artist">${work.artist ? escape(work.artist) : 'Unknown Artist'}</div>
-            <div class="card-tags">${tagsHtml}</div>
-            <div class="card-language">${work.language ? escape(work.language) : ''}</div>
+            <h3 class="card-title">${work.title}</h3>
+            <div class="card-artist">${work.artist || 'Unknown'}</div>
+            <div class="card-footer">
+              <div class="card-tags">${tagsHtml}</div>
+              <div class="card-lang">${work.language || ''}</div>
+            </div>
           </div>
-        `;
+        ;
         return card;
       }
 
-      function renderWorks(worksToRender) {
+      function renderWorks(data) {
         grid.innerHTML = '';
-        
-        // Show empty state if no works
-        if (!worksToRender || worksToRender.length === 0) {
+        if (!data.length) {
           emptyState.style.display = 'block';
-          grid.style.display = 'none';
           return;
         }
-        
-        // Hide empty state and show grid
         emptyState.style.display = 'none';
-        grid.style.display = 'grid';
-        
-        for (let i = 0; i < worksToRender.length; i++) {
-          grid.appendChild(createCard(worksToRender[i]));
-        }
+        data.forEach(work => grid.appendChild(createCard(work)));
       }
 
-      function filterWorks(searchTerm) {
-        if (!searchTerm) return works;
-        
-        const term = searchTerm.toLowerCase().trim();
-        const filtered = [];
-        
-        for (let i = 0; i < works.length; i++) {
-          const work = works[i];
-          let matches = false;
-          
-          if ((work.title || '').toLowerCase().includes(term)) matches = true;
-          if (!matches && (work.artist || '').toLowerCase().includes(term)) matches = true;
-          if (!matches && (work.language || '').toLowerCase().includes(term)) matches = true;
-          
-          if (!matches && work.tags) {
-            for (let j = 0; j < work.tags.length; j++) {
-              if (work.tags[j].toLowerCase().includes(term)) {
-                matches = true;
-                break;
-              }
-            }
-          }
-          
-          if (matches) filtered.push(work);
-        }
-        
-        return filtered;
-      }
-
-      loadWorks();
-      
-      searchInput.addEventListener('input', function(e) {
-        const filtered = filterWorks(e.target.value);
+      searchInput.addEventListener('input', (e) => {
+        const term = e.target.value.toLowerCase();
+        const filtered = works.filter(w => 
+          w.title.toLowerCase().includes(term) || 
+          (w.artist && w.artist.toLowerCase().includes(term)) ||
+          (w.tags && w.tags.some(t => t.toLowerCase().includes(term)))
+        );
         renderWorks(filtered);
       });
+
+      loadWorks();
     })();
   </script>
 </body>
