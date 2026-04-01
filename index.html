@@ -3,102 +3,65 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>HentaiKabar - Doujinshi Collection</title>
+  <title>HentaiKabar - Home</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <header class="site-header">
     <div class="container header-inner">
-      <a class="brand" href="index.html">
-        <img src="logo.png" alt="Logo" class="logo">
-        <span class="tagline">HentaiKabar</span>
-      </a>
+      <div class="header-brand">
+        <a href="index.html" class="brand-link">
+          <img src="logo.png" alt="Logo" class="logo">
+          <span class="tagline">HentaiKabar</span>
+        </a>
+      </div>
+      <div class="header-controls">
+        <button id="theme-toggle" class="theme-btn">☀️</button>
+      </div>
     </div>
   </header>
 
   <main class="container">
-    <div class="search-section">
-      <div class="search-wrapper">
-        <input type="text" id="search" placeholder="Search title, artist, or tags..." autocomplete="off">
-        <div class="search-glow"></div>
-      </div>
+    <div class="search-wrapper">
+      <input type="text" id="search" placeholder="Search title, artist..." autocomplete="off">
     </div>
-
-    <div id="grid" class="works-grid" aria-live="polite"></div>
-
-    <div id="empty-state" class="empty-state" style="display: none;">
-      <p>No results found. Try a different search term.</p>
-    </div>
+    <div id="grid" class="works-grid"></div>
   </main>
-
-  <footer class="site-footer">
-    <div class="container">
-      <p>© 2026 HentaiKabar • Made with Love</p>
-    </div>
-  </footer>
 
   <script>
     (function() {
+      const themeToggle = document.getElementById('theme-toggle');
       const grid = document.getElementById('grid');
-      const searchInput = document.getElementById('search');
-      const emptyState = document.getElementById('empty-state');
-      let works = [];
 
-      async function loadWorks() {
+      const applyTheme = (theme) => {
+        document.documentElement.setAttribute('data-theme', theme);
+        themeToggle.innerText = theme === 'dark' ? '☀️' : '🌙';
+        localStorage.setItem('theme', theme);
+      };
+      applyTheme(localStorage.getItem('theme') || 'dark');
+      themeToggle.onclick = () => applyTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+
+      async function loadData() {
         try {
           const res = await fetch('works.json');
-          works = await res.json();
-          renderWorks(works);
-        } catch (err) {
-          grid.innerHTML = '<div class="error-message">Unable to load database.</div>';
-        }
+          const data = await res.json();
+          render(data);
+          document.getElementById('search').oninput = (e) => {
+            const term = e.target.value.toLowerCase();
+            render(data.filter(w => w.title.toLowerCase().includes(term)));
+          };
+        } catch(e) { grid.innerHTML = "<p>Database Error</p>"; }
       }
 
-      function createCard(work) {
-        const card = document.createElement('a');
-        card.href = 'reader.html?path=' + encodeURIComponent(work.path) + '&p=1';
-        card.className = 'work-card';
-        
-        const tagsHtml = (work.tags || []).slice(0, 2).map(t => <span class="tag">${t}</span>).join('');
-        
-        card.innerHTML = 
-          <div class="card-cover">
-            <img src="${work.cover}" alt="${work.title}" loading="lazy">
-            <div class="card-overlay"></div>
-          </div>
-          <div class="card-info">
-            <h3 class="card-title">${work.title}</h3>
-            <div class="card-artist">${work.artist || 'Unknown'}</div>
-            <div class="card-footer">
-              <div class="card-tags">${tagsHtml}</div>
-              <div class="card-lang">${work.language || ''}</div>
-            </div>
-          </div>
-        ;
-        return card;
+      function render(data) {
+        grid.innerHTML = data.map(work => `
+          <a href="reader.html?path=${encodeURIComponent(work.path)}&p=1" class="work-card">
+            <div class="card-cover"><img src="${work.cover}" loading="lazy"></div>
+            <div class="card-info"><h3 class="card-title">${work.title}</h3></div>
+          </a>
+        `).join('');
       }
-
-      function renderWorks(data) {
-        grid.innerHTML = '';
-        if (!data.length) {
-          emptyState.style.display = 'block';
-          return;
-        }
-        emptyState.style.display = 'none';
-        data.forEach(work => grid.appendChild(createCard(work)));
-      }
-
-      searchInput.addEventListener('input', (e) => {
-        const term = e.target.value.toLowerCase();
-        const filtered = works.filter(w => 
-          w.title.toLowerCase().includes(term) || 
-          (w.artist && w.artist.toLowerCase().includes(term)) ||
-          (w.tags && w.tags.some(t => t.toLowerCase().includes(term)))
-        );
-        renderWorks(filtered);
-      });
-
-      loadWorks();
+      loadData();
     })();
   </script>
 </body>
