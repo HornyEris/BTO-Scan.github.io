@@ -7,93 +7,61 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="progress-container"><div class="progress-bar" id="myBar"></div></div>
-
   <header class="site-header">
     <div class="container header-inner">
-      <a class="brand" href="index.html">
-        <img src="logo.png" alt="Logo" class="logo">
-      </a>
-      <a href="index.html" class="home-link">← Back</a>
+      <div class="header-brand">
+        <a href="index.html" class="brand-link"><img src="logo.png" alt="Logo" class="logo"></a>
+      </div>
+      <div class="header-controls">
+        <button id="theme-toggle" class="theme-btn">☀️</button>
+        <a href="index.html" style="text-decoration:none; color:var(--text); margin-left:10px;">← Back</a>
+      </div>
     </div>
   </header>
 
-  <main class="reader-container container">
-    <aside class="reader-sidebar" id="sidebar">
-      <div id="cover" class="sidebar-cover"></div>
-      <div id="meta" class="sidebar-meta"></div>
-    </aside>
-
+  <main class="container reader-container">
+    <aside class="reader-sidebar" id="sidebar">Loading...</aside>
     <section class="reader-main">
-      <div class="reader-controls">
-        <button id="prev-page" class="nav-btn">Prev</button>
-        <span id="page-indicator" class="page-counter">0 / 0</span>
-        <button id="next-page" class="nav-btn">Next</button>
+      <div class="header-controls" style="justify-content:center; gap:20px; margin-bottom:15px;">
+        <button id="prev" class="nav-btn">Prev</button>
+        <span id="page-num">1 / 1</span>
+        <button id="next" class="nav-btn">Next</button>
       </div>
-      
-      <div class="reader-view">
-        <div class="page-image-container">
-          <img id="current-page-img" alt="Loading...">
-        </div>
-      </div>
+      <div class="page-view"><img id="current-img" alt="Page"></div>
     </section>
   </main>
 
   <script>
-    let currentWork = null, currentPageIndex = 0, currentPages = [];
+    (function() {
+      const themeToggle = document.getElementById('theme-toggle');
+      const applyTheme = (theme) => {
+        document.documentElement.setAttribute('data-theme', theme);
+        themeToggle.innerText = theme === 'dark' ? '☀️' : '🌙';
+        localStorage.setItem('theme', theme);
+      };
+      applyTheme(localStorage.getItem('theme') || 'dark');
+      themeToggle.onclick = () => applyTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
 
-    async function init() {
-      const params = new URLSearchParams(window.location.search);
-      const path = params.get('path');
-      const p = parseInt(params.get('p')) || 1;
-
-      const res = await fetch('works.json');
-      const works = await res.json();
-      currentWork = works.find(w => w.path === path);
-      
-      if (currentWork) {
-        currentPages = currentWork.pages || [];
-        currentPageIndex = p - 1;
-        renderUI();
-        updatePage();
+      let work, idx = 0;
+      async function init() {
+        const path = new URLSearchParams(location.search).get('path');
+        const res = await fetch('works.json');
+        const works = await res.json();
+        work = works.find(w => w.path === path);
+        if(work) {
+          document.getElementById('sidebar').innerHTML = `<img src="${work.cover}" style="width:100%; border-radius:8px;"><h3>${work.title}</h3>`;
+          showPage();
+        }
       }
-    }
-
-    function renderUI() {
-      document.getElementById('cover').innerHTML = <img src="${currentWork.cover}">;
-      document.getElementById('meta').innerHTML = 
-        <h2>${currentWork.title}</h2>
-        <p class="artist">${currentWork.artist}</p>
-        <div class="tags">${currentWork.tags.map(t => <span class="tag">${t}</span>).join('')}</div>
-      ;
-    }
-
-    function updatePage() {
-      const img = document.getElementById('current-page-img');
-      img.style.opacity = '0';
-      setTimeout(() => {
-        img.src = ${currentWork.path}/${currentPages[currentPageIndex]};
-        img.onload = () => img.style.opacity = '1';
-      }, 200);
-
-      document.getElementById('page-indicator').innerText = ${currentPageIndex + 1} / ${currentPages.length};
-      document.getElementById('prev-page').disabled = currentPageIndex === 0;
-      document.getElementById('next-page').disabled = currentPageIndex === currentPages.length - 1;
-      
-      // Progress Bar
-      const scrolled = ((currentPageIndex + 1) / currentPages.length) * 100;
-      document.getElementById("myBar").style.width = scrolled + "%";
-      
-      const url = new URL(window.location);
-      url.searchParams.set('p', currentPageIndex + 1);
-      window.history.replaceState({}, '', url);
-    }
-
-    document.getElementById('prev-page').onclick = () => { if(currentPageIndex > 0) { currentPageIndex--; updatePage(); window.scrollTo(0,0); } };
-    document.getElementById('next-page').onclick = () => { if(currentPageIndex < currentPages.length-1) { currentPageIndex++; updatePage(); window.scrollTo(0,0); } };
-    document.onkeydown = (e) => { if(e.key === 'ArrowLeft') document.getElementById('prev-page').click(); if(e.key === 'ArrowRight') document.getElementById('next-page').click(); };
-
-    init();
+      function showPage() {
+        document.getElementById('current-img').src = `${work.path}/${work.pages[idx]}`;
+        document.getElementById('page-num').innerText = `${idx+1} / ${work.pages.length}`;
+        window.scrollTo(0,0);
+      }
+      document.getElementById('prev').onclick = () => { if(idx > 0) { idx--; showPage(); } };
+      document.getElementById('next').onclick = () => { if(idx < work.pages.length-1) { idx++; showPage(); } };
+      init();
+    })();
   </script>
 </body>
 </html>
